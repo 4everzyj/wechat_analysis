@@ -8,28 +8,35 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import os
 import time
+from enum import Enum
 
 
 IGNORE_HEADERS = ['<?xml version="1.0"?>', '<msg>']
 
 
-def get_wordcloud(data_path, save_dir, is_send=0, talker=''):
+class SendPrefix(Enum):
+    together = -1
+    received = 0
+    sent = 1
+
+
+def get_wordcloud(data_path, save_dir, is_send=SendPrefix.together, talker=''):
     """
     :param data_path: 聊天记录文件excel
-    :param is_send: 0代表对方发送的消息，1代表我发送的消息
+    :param is_send:
     :param save_dir: 词云保存文件夹
     :param talker: 对话人微信号
     :return:
     """
 
-    save_path = os.path.join(save_dir, f'{"sent" if is_send else "received"}_{int(time.time())}.png')
+    save_path = os.path.join(save_dir, f'{SendPrefix(is_send).name}_{int(time.time())}.png')
     df = pd.read_excel(data_path)
+    if is_send != SendPrefix.together:
+        df = df[df.isSend == is_send]
     if talker:
-        df_target = df[(df.isSend == is_send) & (df.talker == talker)]
-    else:
-        df_target = df[df.isSend == is_send]
+        df = df[df.talker == talker]
 
-    texts = df_target['content'].to_list()
+    texts = df['content'].to_list()
 
     with open('data/CNstopwords.txt', 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -72,4 +79,4 @@ def get_wordcloud(data_path, save_dir, is_send=0, talker=''):
 
 if __name__ == '__main__':
     # 示例：绘制 对方 发送的信息的词云图
-    get_wordcloud(MSG_XLSX_PATH, save_dir=SAVE_DIR, is_send=0, talker=TALKER)
+    get_wordcloud(MSG_XLSX_PATH, save_dir=SAVE_DIR, is_send=SendPrefix.together, talker=TALKER)
