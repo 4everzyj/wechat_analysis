@@ -1,3 +1,6 @@
 .idea/
 /my_data/
 /my_result/
+/scripts/
+
+config.json
